@@ -1,0 +1,127 @@
+[
+  {
+    "name": "Child White Hair",
+    "url": "models/assets/child_white_hair_optimized.glb",
+    "size_bytes": 3088044
+  },
+  {
+    "name": "Deckhand Walk",
+    "url": "models/assets/deckhand_walk_optimized.glb",
+    "size_bytes": 3271020
+  },
+  {
+    "name": "First Fisher",
+    "url": "models/assets/first_fisher_optimized.glb",
+    "size_bytes": 3734412
+  },
+  {
+    "name": "Fisherman Hut",
+    "url": "models/assets/fisherman_hut_optimized.glb",
+    "size_bytes": 1586860
+  },
+  {
+    "name": "Fishers House",
+    "url": "models/assets/fishers_house_optimized.glb",
+    "size_bytes": 2269512
+  },
+  {
+    "name": "Fishers Net",
+    "url": "models/assets/fishers_net_optimized.glb",
+    "size_bytes": 1434528
+  },
+  {
+    "name": "Longhouse",
+    "url": "models/assets/longhouse_optimized.glb",
+    "size_bytes": 1024012
+  },
+  {
+    "name": "Palm Tree",
+    "url": "models/assets/palm_tree_optimized.glb",
+    "size_bytes": 1255416
+  },
+  {
+    "name": "Pig Chicken Static",
+    "url": "models/assets/pig_chicken_static_optimized.glb",
+    "size_bytes": 1430020
+  },
+  {
+    "name": "Pig Chicken Walking",
+    "url": "models/assets/pig_chicken_walking_optimized.glb",
+    "size_bytes": 1444356
+  },
+  {
+    "name": "Piranha",
+    "url": "models/assets/piranha_optimized.glb",
+    "size_bytes": 3763168
+  },
+  {
+    "name": "River Eel",
+    "url": "models/assets/river_eel_optimized.glb",
+    "size_bytes": 3640952
+  },
+  {
+    "name": "River Rat Static",
+    "url": "models/assets/river_rat_static_optimized.glb",
+    "size_bytes": 962568
+  },
+  {
+    "name": "River Rat Walking",
+    "url": "models/assets/river_rat_walking_optimized.glb",
+    "size_bytes": 976904
+  },
+  {
+    "name": "Rock Pile",
+    "url": "models/assets/rock_pile_optimized.glb",
+    "size_bytes": 1036212
+  },
+  {
+    "name": "Rukiya",
+    "url": "models/assets/rukiya_optimized.glb",
+    "size_bytes": 3308048
+  },
+  {
+    "name": "Rukiya Walking",
+    "url": "models/assets/rukiya_walking_optimized.glb",
+    "size_bytes": 3118748
+  },
+  {
+    "name": "Shuppy Static",
+    "url": "models/assets/shuppy_static_optimized.glb",
+    "size_bytes": 1618656
+  },
+  {
+    "name": "Shuppy Walking",
+    "url": "models/assets/shuppy_walking_optimized.glb",
+    "size_bytes": 1632996
+  },
+  {
+    "name": "Tropical Palm Tree",
+    "url": "models/assets/tropical_palm_tree_optimized.glb",
+    "size_bytes": 1248940
+  },
+  {
+    "name": "Villager F",
+    "url": "models/assets/villager_f_optimized.glb",
+    "size_bytes": 3253704
+  },
+  {
+    "name": "Villager M",
+    "url": "models/assets/villager_m_optimized.glb",
+    "size_bytes": 2955308
+  },
+  {
+    "name": "Wooden Barrel",
+    "url": "models/assets/wooden_barrel_optimized.glb",
+    "size_bytes": 1457180
+  },
+  {
+    "name": "Wooden Dock",
+    "url": "models/assets/wooden_dock_optimized.glb",
+    "size_bytes": 1433940
+  },
+  {
+    "name": "Young Fisher",
+    "url": "models/assets/young_fisher_optimized.glb",
+    "size_bytes": 3075484
+  }
+]

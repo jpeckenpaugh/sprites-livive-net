@@ -1,0 +1,1770 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Model Browser · Turntable</title>
+  <style>
+    :root { color-scheme: dark; font: 15px/1.45 system-ui, sans-serif; background: #11151b; color: #edf1f7; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; padding: 32px; }
+    header { max-width: 1200px; margin: 0 auto 22px; display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+    h1 { margin: 0; font-size: 1.4rem; font-weight: 650; }
+    #status { color: #aab5c4; font-size: .9rem; }
+    .page-link { color: #9fc8f5; text-decoration: none; font-size: .9rem; }
+    .page-link:hover { text-decoration: underline; }
+    main { max-width: 1200px; margin: auto; }
+    #controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 20px; padding: 14px; border: 1px solid #303946; border-radius: 10px; background: #1b222c; }
+    .control { display: grid; gap: 5px; color: #bbc5d2; font-size: .82rem; }
+    select, input, button { min-height: 38px; border: 1px solid #465363; border-radius: 6px; padding: 7px 10px; color: #edf1f7; background: #111820; font: inherit; }
+    input[type="range"] { min-height: 0; width: 150px; padding: 0; accent-color: #79a9e0; }
+    .custom-size { display: flex; align-items: center; gap: 6px; }
+    .custom-size input { width: 88px; }
+    .checkbox-control { display: flex; align-items: center; flex-direction: row; gap: 8px; min-height: 38px; }
+    .checkbox-control input { min-height: 0; width: 16px; height: 16px; margin: 0; }
+    button { cursor: pointer; background: #365a86; border-color: #547eaf; font-weight: 600; }
+    button:hover { background: #426b9d; }
+    button:disabled, select:disabled, input:disabled { opacity: .55; cursor: wait; }
+    #views { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 14px; }
+    #views-scroll { max-width: 100%; }
+    #views .direction-group { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 14px; }
+    #views .direction-group h2 { flex: 0 0 100%; margin: 6px 0 -4px; color: #aab5c4; font-size: .95rem; }
+    #views.native { display: flex; flex-wrap: wrap; align-items: flex-start; }
+    #views.native .direction-group { flex-basis: 100%; }
+    #views.playback { display: flex; justify-content: center; align-items: flex-start; }
+    #views.playback figure { display: none; flex: 0 0 min(100%, 512px); width: min(100%, 512px); }
+    #views.playback figure.active { display: block; }
+    #views.playback.directional { display: grid; width: 100%; min-width: 0; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(150px, auto)); align-items: stretch; }
+    #views.playback.directional .direction-group { grid-column: auto; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    #views.playback.directional .direction-group h2 { grid-column: auto; align-self: end; margin: 0; color: #b9c7d8; font-size: .82rem; }
+    #views.playback.directional figure { display: none; width: 100%; min-width: 0; }
+    #views.playback.directional figure.active { display: block; }
+    #views.playback.directional .direction-group[data-preview-kind="rendered"] figure { border-color: #4f8fc5; }
+    #views.playback.directional .direction-group[data-preview-kind="derived"] figure { border-color: #c58c4f; }
+    #views.playback.directional:not(.native) figure { width: min(100%, var(--fit-cap-width, 100%)); justify-self: center; }
+    .preview-type-badge { display: inline-block; margin-left: 5px; padding: 1px 5px; border: 1px solid currentColor; border-radius: 999px; font-size: .62rem; font-weight: 700; letter-spacing: .04em; vertical-align: 1px; }
+    .preview-type-badge.rendered { color: #8ec8ff; }
+    .preview-type-badge.derived { color: #f0ba75; }
+    .direction-wheel-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 12px; padding: 8px 12px; border: 1px solid #465363; border-radius: 10px; background: #1b222c; color: #aab5c4; font-size: .78rem; }
+    .direction-wheel-key strong { color: #edf1f7; }
+    #views-scroll.wheel-active { overflow-x: auto; }
+    #views.playback.directional .direction-group[data-grid-row="1"] { grid-row: 1; }
+    #views.playback.directional .direction-group[data-grid-row="2"] { grid-row: 2; }
+    #views.playback.directional .direction-group[data-grid-row="3"] { grid-row: 3; }
+    #views.playback.directional .direction-group[data-grid-row="4"] { grid-row: 4; }
+    #views.playback.directional .direction-group[data-grid-row="5"] { grid-row: 5; }
+    #views.playback.directional .direction-group[data-grid-column="1"] { grid-column: 1; }
+    #views.playback.directional .direction-group[data-grid-column="2"] { grid-column: 2; }
+    #views.playback.directional .direction-group[data-grid-column="3"] { grid-column: 3; }
+    #views.playback.directional .direction-group[data-grid-column="4"] { grid-column: 4; }
+    #views.playback.directional .direction-group[data-grid-column="5"] { grid-column: 5; }
+    #views.playback figure figcaption { box-sizing: border-box; display: flex; align-items: center; height: 40px; padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    figure { margin: 0; overflow: hidden; border: 1px solid #303946; border-radius: 10px; background: #1b222c; }
+    figure img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #dfe4e8; image-rendering: pixelated; }
+    figure canvas { display: block; width: 100%; object-fit: contain; background: #dfe4e8; image-rendering: pixelated; }
+    #views.native figure img { width: auto; height: auto; max-width: none; }
+    #views.native figure canvas { width: auto; height: auto; max-width: none; }
+    #views.native.playback figure { flex-basis: min(var(--frame-width), 100%); width: min(var(--frame-width), 100%); max-width: 100%; }
+    #views.native.playback figure img { max-width: min(80vw, 70vh); max-height: 70vh; }
+    #views.native.playback figure canvas { max-width: min(80vw, 70vh); max-height: 70vh; }
+    #views.native.playback.directional { width: max-content; grid-template-columns: repeat(5, max-content); grid-template-rows: repeat(5, auto); }
+    #views.native.playback.directional .direction-group { width: max-content; }
+    #views.native.playback.directional figure { flex: initial; width: auto; max-width: none; }
+    #views.native.playback.directional figure img, #views.native.playback.directional figure canvas { width: auto; max-width: none; max-height: none; height: auto; }
+    #views.transparent figure img, #views.transparent figure canvas { background-color: #edf0f3; background-image: conic-gradient(#c7cdd4 25%, #edf0f3 0 50%, #c7cdd4 0 75%, #edf0f3 0); background-size: 16px 16px; }
+    figcaption { padding: 10px 12px; font-weight: 600; }
+    #error { color: #ffb0a8; white-space: pre-wrap; }
+    #asset-info { margin-top: 24px; padding: 16px; border: 1px solid #303946; border-radius: 10px; background: #1b222c; }
+    #asset-info h2 { margin: 0 0 12px; font-size: 1rem; }
+    #asset-info dl { display: grid; grid-template-columns: minmax(180px, max-content) 1fr; gap: 6px 16px; margin: 0; }
+    #asset-info dt { color: #aab5c4; }
+    #asset-info dd { margin: 0; font-variant-numeric: tabular-nums; }
+    #asset-info p { margin: 12px 0 0; color: #aab5c4; font-size: .82rem; }
+    @media (max-width: 800px) { body { padding: 20px; } #views { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); } }
+    @media (max-width: 420px) { body { padding: 14px; } header { align-items: start; flex-direction: column; } }
+    /* Focused workspace layout: keep the primary path visible and tuck options away. */
+    body { background: #10141b; }
+    header { max-width: 1320px; padding-bottom: 15px; border-bottom: 1px solid #293340; }
+    h1 { letter-spacing: -.035em; }
+    main { max-width: 1320px; }
+    #controls { display: grid; grid-template-columns: 1fr; align-items: stretch; gap: 9px; padding: 12px; border-color: #364354; }
+    .primary-controls { display: grid; grid-template-columns: minmax(130px,.75fr) minmax(190px,1.5fr) minmax(160px,1fr) minmax(130px,.7fr) auto auto; align-items: end; gap: 10px; }
+    .primary-controls .control { min-width: 0; }
+    .primary-controls select { width: 100%; }
+    .primary-controls button { min-height: 42px; white-space: nowrap; }
+    .option-group { border: 1px solid #303b49; border-radius: 8px; background: #151c25; }
+    .option-group summary { display: flex; justify-content: space-between; align-items: center; gap: 14px; min-height: 42px; padding: 8px 12px; color: #dce6f2; cursor: pointer; font-size: .86rem; font-weight: 600; list-style-position: inside; }
+    .option-group summary span { color: #8999ab; font-size: .77rem; font-weight: 400; }
+    .option-grid { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 4px 12px 12px; }
+    .option-grid .control { min-width: 135px; }
+    .option-grid input[type="range"] { width: min(220px, 38vw); }
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .playback-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+    .playback-label { align-self: center; margin-right: auto; color: #aab5c4; font-size: .82rem; }
+    .compact-control { min-width: 76px; }
+    .compact-control select { min-width: 70px; }
+    #views { gap: 16px; }
+    figure { box-shadow: 0 5px 18px #0002; }
+    #asset-info { border-color: #303b49; }
+    @media (max-width: 1050px) { .primary-controls { grid-template-columns: repeat(3,minmax(0,1fr)); } .primary-controls button { width: 100%; } }
+    @media (max-width: 620px) {
+      body { padding: 14px; }
+      header { align-items: flex-start; flex-direction: column; gap: 8px; }
+      header > div { flex-wrap: wrap; }
+      #controls { padding: 9px; }
+      .primary-controls { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .primary-controls .model-control, #animation-clip-control { grid-column: 1 / -1; }
+      .primary-controls button { grid-column: 1 / -1; }
+      .option-group summary { align-items: flex-start; flex-direction: column; gap: 1px; }
+      .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .option-grid .control { min-width: 0; }
+      .option-grid button { grid-column: 1 / -1; }
+      .range-row { align-items: flex-start; flex-direction: column; }
+      .option-grid input[type="range"] { width: 100%; }
+      .playback-label { flex-basis: 100%; }
+      .playback-controls { gap: 6px; }
+      .playback-controls > button { flex: 1; padding-inline: 7px; }
+      #views { grid-template-columns: repeat(auto-fill,minmax(120px,1fr)); gap: 10px; }
+      #asset-info dl { grid-template-columns: 1fr; gap: 2px; }
+      #asset-info dd { margin-bottom: 7px; }
+    }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/" } }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Turntable preview</h1>
+    <div style="display:flex; align-items:center; gap:18px"><a class="page-link" href="https://oblique.livive.net/">Oblique Sandbox →</a><div id="status">Loading model…</div></div>
+  </header>
+  <main>
+    <section id="controls" aria-label="Render options">
+      <div class="primary-controls">
+        <label class="control">Make
+          <select id="mode"><option value="still">Still views</option><option value="walking" selected>Animation frames</option></select>
+        </label>
+        <label class="control model-control">Model
+          <select id="model-select" disabled><option>Loading model list…</option></select>
+        </label>
+        <label class="control" id="animation-clip-control">Animation clip
+          <select id="animation-clip" disabled><option>Loading model…</option></select>
+        </label>
+        <label class="control">Output size
+          <select id="size"><option value="64">64 × 64</option><option value="128" selected>128 × 128</option><option value="256">256 × 256</option><option value="512">512 × 512</option><option value="1024">1024 × 1024</option><option value="854x480">480p · 854 × 480</option><option value="1280x720">720p · 1280 × 720</option><option value="1920x1080">1080p · 1920 × 1080</option><option value="custom">Custom</option></select>
+        </label>
+        <button id="render" type="button" disabled>Render preview</button>
+        <button id="export-sheet" type="button" disabled>Export sprite sheet</button>
+      </div>
+      <details class="option-group">
+        <summary>Render settings <span>Views, framing, and preview</span></summary>
+        <div class="option-grid">
+          <div class="control" id="custom-controls" hidden><span>Custom dimensions</span><div class="custom-size"><input id="custom-width" type="number" min="16" max="2048" step="1" value="128" aria-label="Custom image width"><span>×</span><input id="custom-height" type="number" min="16" max="2048" step="1" value="128" aria-label="Custom image height"></div></div>
+          <label class="control">Camera pitch<select id="pitch"><option value="0">0° (level)</option><option value="30" selected>30°</option><option value="45">45°</option><option value="60">60°</option><option value="custom">Custom</option></select></label>
+          <label class="control" id="custom-pitch-control" hidden>Custom pitch (0–80°)<input id="custom-pitch" type="number" min="0" max="80" step="1" value="45"></label>
+          <label class="control" id="angle-count-control">View count<select id="count"><option value="4">4 views · 90° apart</option><option value="8" selected>8 views · 45° apart</option><option value="12">12 views · 30° apart</option><option value="16">16 views · 22.5° apart</option></select></label>
+          <label class="control" id="frame-count-control" hidden>Frame count<input id="frame-count" type="number" min="1" max="64" step="1" value="8"></label>
+          <label class="control" id="experiment-zoom-control" hidden>Derived preview zoom<input id="experiment-zoom" type="range" min="100" max="160" step="5" value="125" aria-label="Shear and rotation preview zoom"><output id="experiment-zoom-value" for="experiment-zoom">125%</output></label>
+          <label class="control checkbox-control"><input id="native-preview" type="checkbox" checked>Show previews at native resolution</label>
+          <label class="control checkbox-control"><input id="transparent-background" type="checkbox" checked>Transparent background</label>
+        </div>
+      </details>
+      <details class="option-group">
+        <summary>Export settings <span>Format and optional metadata</span></summary>
+        <div class="option-grid">
+          <label class="control">Sprite sheet format<select id="export-format"><option value="webp" selected>WebP · adaptive 256 colors</option><option value="png">PNG · full color</option></select></label>
+          <label class="control checkbox-control"><input id="export-json" type="checkbox" checked>Export metadata as separate JSON</label>
+          <label class="control checkbox-control" id="export-diagonals-control" hidden><input id="export-diagonals" type="checkbox">Include 8 derived diagonal directions</label>
+          <label class="control checkbox-control" id="export-stills-control" hidden><input id="export-stills" type="checkbox" checked>Include 8 additional still views</label>
+        </div>
+      </details>
+      <details class="option-group">
+        <summary>Single sprite <span>Capture one angle and crop to bounds</span></summary>
+        <div class="option-grid">
+          <label class="control">Camera angle<span class="range-row"><input id="single-angle" type="range" min="0" max="359" value="0" aria-label="Single sprite camera angle"><output id="single-angle-value">0°</output></span></label>
+          <label class="control">Crop padding<span class="range-row"><input id="single-padding" type="range" min="0" max="20" value="4" aria-label="Crop padding percentage"><output id="single-padding-value">4%</output></span></label>
+          <button id="preview-single" type="button" disabled>Preview single sprite</button>
+          <button id="export-single" type="button" disabled>Download single sprite</button>
+        </div>
+      </details>
+      <div class="playback-controls" aria-label="Preview playback">
+        <span class="playback-label">Preview playback</span>
+        <button id="previous-frame" type="button" aria-label="Previous playback frame" title="Previous frame" disabled>◀</button>
+        <button id="pause" type="button" disabled>Pause</button>
+        <button id="play" type="button" disabled>Play</button>
+        <button id="next-frame" type="button" aria-label="Next playback frame" title="Next frame" disabled>▶</button>
+        <label class="control compact-control">FPS<select id="playback-speed"><option value="2">2</option><option value="4">4</option><option value="8" selected>8</option><option value="12">12</option><option value="16">16</option><option value="24">24</option></select></label>
+        <label class="control compact-control">Blended<select id="inbetween-count"><option value="0">Off</option><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></label>
+      </div>
+    </section>
+    <aside class="direction-wheel-key" id="direction-wheel-key" hidden><strong>Preview type:</strong><span><span class="preview-type-badge rendered">RENDERED</span> Captured from model</span><span><span class="preview-type-badge derived">DERIVED</span> Shear/rotation preview</span></aside>
+    <div id="views-scroll"><div id="views" aria-live="polite"></div></div>
+    <section id="single-preview-panel" hidden style="margin-top:16px;padding:12px;border:1px solid #303946;border-radius:10px;background:#1b222c"><strong>Single sprite preview</strong><div style="margin-top:8px;max-height:45vh;overflow:auto"><img id="single-preview" alt="Single sprite preview" style="display:block;max-width:100%;max-height:42vh;object-fit:contain;background-color:#edf0f3;background-image:conic-gradient(#c7cdd4 25%,#edf0f3 0 50%,#c7cdd4 0 75%,#edf0f3 0);background-size:16px 16px"></div><p id="single-preview-info" style="color:#aab5c4;margin:8px 0 0"></p></section>
+    <p id="error" role="alert"></p>
+    <section id="asset-info" aria-labelledby="asset-info-title">
+      <h2 id="asset-info-title">Asset info</h2>
+      <dl>
+        <dt>Source model file</dt><dd id="asset-model-size">—</dd>
+        <dt>Rendered source frames</dt><dd id="asset-frame-count">—</dd>
+        <dt>Uncompressed source frames (RGBA)</dt><dd id="asset-raw-size">—</dd>
+        <dt>Provisional source-frame layout</dt><dd id="asset-sheet-layout">—</dd>
+        <dt>Estimated PNG size (rendered frames)</dt><dd id="asset-png-size">Render frames to estimate</dd>
+        <dt>Palette WebP size</dt><dd id="asset-webp-size">Export to encode</dd>
+      </dl>
+      <p>PNG and WebP exports use a row-major grid. Animation exports include sampled cardinal poses and, by default, eight additional still views at the missing 30° angles, sampled from the selected clip at time 0. Eight shear/rotation-derived animation directions are optional and off by default; blended playback frames are excluded. WebP uses adaptive palette reduction to at most 256 colors, then lossless encoding, with sprite metadata embedded as XMP. Model size is the selected file size; external files referenced by a .gltf are not included.</p>
+    </section>
+  </main>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    const status = document.querySelector('#status');
+    const views = document.querySelector('#views');
+    const viewsScroll = document.querySelector('#views-scroll');
+    const directionWheelKey = document.querySelector('#direction-wheel-key');
+    const modelSelect = document.querySelector('#model-select');
+    const animationSelect = document.querySelector('#animation-clip');
+    const animationClipControl = document.querySelector('#animation-clip-control');
+    const sizeSelect = document.querySelector('#size');
+    const pitchSelect = document.querySelector('#pitch');
+    const customWidth = document.querySelector('#custom-width');
+    const customHeight = document.querySelector('#custom-height');
+    const customPitch = document.querySelector('#custom-pitch');
+    const modeSelect = document.querySelector('#mode');
+    const frameCountInput = document.querySelector('#frame-count');
+    const experimentZoom = document.querySelector('#experiment-zoom');
+    const experimentZoomValue = document.querySelector('#experiment-zoom-value');
+    const nativePreview = document.querySelector('#native-preview');
+    const transparency = document.querySelector('#transparent-background');
+    const renderButton = document.querySelector('#render');
+    const exportSheetButton = document.querySelector('#export-sheet');
+    const previewSingleButton = document.querySelector('#preview-single');
+    const exportSingleButton = document.querySelector('#export-single');
+    const singleAngle = document.querySelector('#single-angle');
+    const singlePadding = document.querySelector('#single-padding');
+    const exportFormat = document.querySelector('#export-format');
+    const exportJson = document.querySelector('#export-json');
+    const exportDiagonals = document.querySelector('#export-diagonals');
+    const exportDiagonalsControl = document.querySelector('#export-diagonals-control');
+    const exportStills = document.querySelector('#export-stills');
+    const exportStillsControl = document.querySelector('#export-stills-control');
+    const playButton = document.querySelector('#play');
+    const pauseButton = document.querySelector('#pause');
+    const previousFrameButton = document.querySelector('#previous-frame');
+    const nextFrameButton = document.querySelector('#next-frame');
+    const playbackSpeed = document.querySelector('#playback-speed');
+    const inbetweenCount = document.querySelector('#inbetween-count');
+    let model;
+    let renderer;
+    let mixer;
+    let walkingClip;
+    let animationClips = [];
+    let playbackTimer;
+    let playbackStep;
+    let playbackFrames = [];
+    let playbackSourceFigures = [];
+    let playbackIndex = -1;
+    let playbackBlendFigures = [];
+    let playbackExperimentGroups = [];
+    let playbackExperiments = [];
+    const warpSourcePixels = new Map();
+    const walkingDerivedDirections = [
+      { heading: 'Backward Left', sourceIndex: 2, angleDegrees: 150, shear: -0.4, rotation: 20, rotationLabel: 'CCW 20°', row: 1, column: 2 },
+      { heading: 'Backward Right', sourceIndex: 2, angleDegrees: 210, shear: 0.4, rotation: -20, rotationLabel: 'CW 20°', row: 1, column: 4 },
+      { heading: 'Right-Back', sourceIndex: 1, angleDegrees: 120, shear: -0.4, rotation: 20, rotationLabel: 'CCW 20°', row: 2, column: 5 },
+      { heading: 'Left-Back', sourceIndex: 3, angleDegrees: 240, shear: 0.4, rotation: -20, rotationLabel: 'CW 20°', row: 2, column: 1 },
+      { heading: 'Right-Forward', sourceIndex: 1, angleDegrees: 60, shear: 0.4, rotation: -20, rotationLabel: 'CW 20°', row: 4, column: 5 },
+      { heading: 'Left-Forward', sourceIndex: 3, angleDegrees: 300, shear: -0.4, rotation: 20, rotationLabel: 'CCW 20°', row: 4, column: 1 },
+      { heading: 'Forward Left', sourceIndex: 0, angleDegrees: 330, shear: 0.4, rotation: -20, rotationLabel: 'CW 20°', row: 5, column: 2 },
+      { heading: 'Forward Right', sourceIndex: 0, angleDegrees: 30, shear: -0.4, rotation: 20, rotationLabel: 'CCW 20°', row: 5, column: 4 },
+    ];
+    const animationTemplateStillAngles = [30, 60, 120, 150, 210, 240, 300, 330];
+    let modelLoadSerial = 0;
+    let renderSerial = 0;
+    let playbackRequest = 0;
+    let modelFileBytes = null;
+    let assetEstimateSerial = 0;
+    let lastRenderConfig = null;
+    let singleSpriteCapture = null;
+
+    function placeOnDirectionGrid(element, row, column, previewKind) {
+      if (!Number.isInteger(row) || row < 1 || row > 5 || !Number.isInteger(column) || column < 1 || column > 5) {
+        throw new Error(`Unknown direction grid position: ${row}, ${column}`);
+      }
+      element.dataset.gridRow = String(row);
+      element.dataset.gridColumn = String(column);
+      element.dataset.previewKind = previewKind;
+    }
+
+    function appendPreviewBadge(heading, kind) {
+      const badge = document.createElement('span');
+      badge.className = `preview-type-badge ${kind}`;
+      badge.textContent = kind === 'rendered' ? 'RENDERED' : 'DERIVED';
+      heading.append(badge);
+    }
+
+    function playbackIntervalMs() {
+      return 1000 / (Number(playbackSpeed.value) * (Number(inbetweenCount.value) + 1));
+    }
+
+    function syncExportButton() {
+      exportSheetButton.disabled = !lastRenderConfig || lastRenderConfig.mode !== modeSelect.value;
+      previewSingleButton.disabled = !model;
+      exportSingleButton.disabled = !singleSpriteCapture;
+    }
+
+    sizeSelect.addEventListener('change', () => {
+      document.querySelector('#custom-controls').hidden = sizeSelect.value !== 'custom';
+    });
+    pitchSelect.addEventListener('change', () => {
+      document.querySelector('#custom-pitch-control').hidden = pitchSelect.value !== 'custom';
+    });
+    modeSelect.addEventListener('change', () => {
+      const walking = modeSelect.value === 'walking';
+      document.querySelector('#angle-count-control').hidden = walking;
+      document.querySelector('#frame-count-control').hidden = !walking;
+      document.querySelector('#experiment-zoom-control').hidden = !walking;
+      animationClipControl.hidden = !walking;
+      exportDiagonalsControl.hidden = !walking;
+      exportStillsControl.hidden = !walking;
+      syncExportButton();
+    });
+    modeSelect.dispatchEvent(new Event('change'));
+    nativePreview.addEventListener('change', () => {
+      views.classList.toggle('native', nativePreview.checked);
+    });
+    transparency.addEventListener('change', () => {
+      views.classList.toggle('transparent', transparency.checked);
+      if (model) renderViews();
+    });
+    // Change handlers do not run on initial load, so seed preview classes from defaults.
+    views.classList.toggle('native', nativePreview.checked);
+    views.classList.toggle('transparent', transparency.checked);
+    renderButton.addEventListener('click', () => { invalidateSinglePreview(); renderViews(); });
+    exportSheetButton.addEventListener('click', exportSpriteSheet);
+    const invalidateSinglePreview = () => { singleSpriteCapture = null; document.querySelector('#single-preview-panel').hidden = true; syncExportButton(); };
+    singleAngle.addEventListener('input', () => { document.querySelector('#single-angle-value').value = `${singleAngle.value}°`; invalidateSinglePreview(); });
+    singlePadding.addEventListener('input', () => { document.querySelector('#single-padding-value').value = `${singlePadding.value}%`; invalidateSinglePreview(); });
+    [sizeSelect, pitchSelect, customPitch, customWidth, customHeight, transparency, exportFormat, modelSelect, modeSelect].forEach((control) => control.addEventListener('change', invalidateSinglePreview));
+    previewSingleButton.addEventListener('click', previewSingleSprite);
+    exportSingleButton.addEventListener('click', exportSingleSprite);
+    playButton.addEventListener('click', togglePlayback);
+    pauseButton.addEventListener('click', pausePlayback);
+    previousFrameButton.addEventListener('click', () => stepPlayback(-1));
+    nextFrameButton.addEventListener('click', () => stepPlayback(1));
+    playbackSpeed.addEventListener('change', () => {
+      if (playbackTimer) {
+        clearInterval(playbackTimer);
+        playbackTimer = setInterval(playbackStep, playbackIntervalMs());
+      }
+    });
+    inbetweenCount.addEventListener('change', () => {
+      if (playbackTimer) stopPlayback();
+    });
+    experimentZoom.addEventListener('input', () => {
+      experimentZoomValue.textContent = `${experimentZoom.value}%`;
+      if (playbackIndex >= 0) displayPlaybackFrame(playbackIndex);
+    });
+    modelSelect.addEventListener('change', () => loadModel(modelSelect.value));
+    animationSelect.addEventListener('change', () => {
+      if (!model) return;
+      walkingClip = animationClips[Number(animationSelect.value)] || walkingClip;
+      mixer = walkingClip ? new THREE.AnimationMixer(model) : null;
+      if (mixer) {
+        mixer.clipAction(walkingClip).play();
+        mixer.setTime(0);
+      }
+      renderViews();
+    });
+
+    function selectedDimensions() {
+      const custom = sizeSelect.value === 'custom';
+      const presetDimensions = sizeSelect.value.split('x').map(Number);
+      const width = custom ? Number(customWidth.value) : presetDimensions[0];
+      const height = custom ? Number(customHeight.value) : (presetDimensions[1] || presetDimensions[0]);
+      for (const [label, value] of [['Width', width], ['Height', height]]) {
+        if (!Number.isInteger(value) || value < 16 || value > 2048) throw new Error(`Image ${label.toLowerCase()} must be a whole number from 16 to 2048 pixels.`);
+      }
+      return { width, height };
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes)) return '—';
+      if (bytes < 1024) return `${bytes} B`;
+      const units = ['KiB', 'MiB', 'GiB'];
+      let value = bytes / 1024;
+      let unit = units[0];
+      for (let index = 1; value >= 1024 && index < units.length; index += 1) {
+        value /= 1024;
+        unit = units[index];
+      }
+      return `${value.toFixed(2)} ${unit}`;
+    }
+
+    function updateAssetInfo(dimensions, sourceFigures) {
+      const serial = ++assetEstimateSerial;
+      const frameCount = sourceFigures.length;
+      const walking = lastRenderConfig?.mode === 'walking' && frameCount % 4 === 0;
+      const columns = walking ? frameCount / 4 : Math.min(frameCount, 4);
+      const rows = walking ? 4 : Math.ceil(frameCount / columns);
+      const rawFramesBytes = dimensions.width * dimensions.height * 4 * frameCount;
+      const sheetWidth = dimensions.width * columns;
+      const sheetHeight = dimensions.height * rows;
+      const rawSheetBytes = sheetWidth * sheetHeight * 4;
+      document.querySelector('#asset-model-size').textContent = formatBytes(modelFileBytes);
+      document.querySelector('#asset-frame-count').textContent = `${frameCount} · ${dimensions.width} × ${dimensions.height} px each`;
+      document.querySelector('#asset-raw-size').textContent = formatBytes(rawFramesBytes);
+      document.querySelector('#asset-sheet-layout').textContent = `${columns} × ${rows} grid · ${sheetWidth} × ${sheetHeight} px · ${formatBytes(rawSheetBytes)} raw`;
+      const pngSize = document.querySelector('#asset-png-size');
+      const maxEstimateBytes = 64 * 1024 * 1024;
+      if (rawSheetBytes > maxEstimateBytes) {
+        pngSize.textContent = `Skipped (sheet canvas would use ${formatBytes(rawSheetBytes)} raw)`;
+        return;
+      }
+      pngSize.textContent = 'Encoding PNG…';
+      document.querySelector('#asset-webp-size').textContent = 'Use Export PNG + WebP to encode';
+      const images = sourceFigures.map((figure) => figure.querySelector('img'));
+      Promise.all(images.map((image) => image.decode()))
+        .then(() => new Promise((resolve, reject) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = sheetWidth;
+          canvas.height = sheetHeight;
+          const context = canvas.getContext('2d');
+          if (!context) return reject(new Error('Canvas context is unavailable.'));
+          images.forEach((image, index) => {
+            context.drawImage(image, (index % columns) * dimensions.width, Math.floor(index / columns) * dimensions.height);
+          });
+          canvas.toBlob(resolve, 'image/png');
+        }))
+        .then((blob) => {
+          if (serial !== assetEstimateSerial) return;
+          pngSize.textContent = blob ? `${formatBytes(blob.size)} PNG` : 'Could not encode PNG';
+        })
+        .catch((error) => {
+          if (serial === assetEstimateSerial) pngSize.textContent = `Could not estimate (${error.message})`;
+        });
+    }
+
+    function safeFilename(value) {
+      return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'sprite-sheet';
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function encodeBrowserWebp(imageData) {
+      const canvas = document.createElement('canvas');
+      canvas.width = imageData.width;
+      canvas.height = imageData.height;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Canvas context is unavailable for WebP encoding.');
+      context.putImageData(imageData, 0, 0);
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error('WebP encoding failed.')), 'image/webp', 1);
+      });
+      if (blob.type !== 'image/webp') throw new Error('This browser does not support WebP encoding. Choose PNG instead.');
+      return new Uint8Array(await blob.arrayBuffer());
+    }
+
+    async function quantizeToAdaptivePalette(source, maximumColors = 256) {
+      // Median cut over a compact RGBA histogram keeps palette creation bounded
+      // while preserving the dominant colors and transparency of the sprite sheet.
+      const pixels = source.data;
+      const histogram = new Map();
+      let hasTransparency = false;
+      for (let offset = 0; offset < pixels.length; offset += 4) {
+        const r = pixels[offset];
+        const g = pixels[offset + 1];
+        const b = pixels[offset + 2];
+        const a = pixels[offset + 3];
+        if (a === 0) {
+          hasTransparency = true;
+          continue;
+        }
+        const r5 = r >> 3;
+        const g5 = g >> 3;
+        const b5 = b >> 3;
+        const a4 = Math.max(1, Math.round(a * 15 / 255));
+        const key = r5 | (g5 << 5) | (b5 << 10) | (a4 << 15);
+        let color = histogram.get(key);
+        if (!color) {
+          color = { key, count: 0, r: 0, g: 0, b: 0, a: 0 };
+          histogram.set(key, color);
+        }
+        color.count += 1;
+        color.r += r;
+        color.g += g;
+        color.b += b;
+        color.a += a;
+        if ((offset & 0xfffff) === 0xffffc) await new Promise(requestAnimationFrame);
+      }
+
+      const colors = [...histogram.values()];
+      for (const color of colors) {
+        color.r /= color.count;
+        color.g /= color.count;
+        color.b /= color.count;
+        color.a /= color.count;
+      }
+      const channelNames = ['r', 'g', 'b', 'a'];
+      const getStats = (items) => {
+        const minima = [255, 255, 255, 255];
+        const maxima = [0, 0, 0, 0];
+        let weight = 0;
+        for (const color of items) {
+          weight += color.count;
+          channelNames.forEach((name, index) => {
+            minima[index] = Math.min(minima[index], color[name]);
+            maxima[index] = Math.max(maxima[index], color[name]);
+          });
+        }
+        const ranges = maxima.map((maximum, index) => maximum - minima[index]);
+        const axis = ranges.indexOf(Math.max(...ranges));
+        return { axis, range: ranges[axis], weight };
+      };
+      const maxOpaqueColors = maximumColors - (hasTransparency ? 1 : 0);
+      const boxes = colors.length ? [colors] : [];
+      while (boxes.length < maxOpaqueColors) {
+        let splitIndex = -1;
+        let splitStats = null;
+        let bestScore = -1;
+        for (let index = 0; index < boxes.length; index += 1) {
+          if (boxes[index].length < 2) continue;
+          const stats = getStats(boxes[index]);
+          const score = stats.range * stats.weight;
+          if (score > bestScore) {
+            bestScore = score;
+            splitIndex = index;
+            splitStats = stats;
+          }
+        }
+        if (splitIndex < 0 || !splitStats || splitStats.range <= 0) break;
+        const box = boxes[splitIndex].slice().sort((left, right) => left[channelNames[splitStats.axis]] - right[channelNames[splitStats.axis]]);
+        const halfWeight = box.reduce((sum, color) => sum + color.count, 0) / 2;
+        let accumulated = 0;
+        let cut = 0;
+        while (cut < box.length - 1 && accumulated < halfWeight) {
+          accumulated += box[cut].count;
+          cut += 1;
+        }
+        boxes.splice(splitIndex, 1, box.slice(0, cut), box.slice(cut));
+      }
+
+      const palette = hasTransparency ? [{ r: 0, g: 0, b: 0, a: 0 }] : [];
+      for (const box of boxes) {
+        let weight = 0;
+        const sums = [0, 0, 0, 0];
+        for (const color of box) {
+          weight += color.count;
+          channelNames.forEach((name, index) => { sums[index] += color[name] * color.count; });
+        }
+        if (weight) palette.push({
+          r: Math.round(sums[0] / weight),
+          g: Math.round(sums[1] / weight),
+          b: Math.round(sums[2] / weight),
+          a: Math.round(sums[3] / weight),
+        });
+      }
+      const nearestPaletteIndex = new Map();
+      const result = new Uint8ClampedArray(pixels.length);
+      for (let offset = 0; offset < pixels.length; offset += 4) {
+        const alpha = pixels[offset + 3];
+        if (alpha === 0) continue;
+        const r5 = pixels[offset] >> 3;
+        const g5 = pixels[offset + 1] >> 3;
+        const b5 = pixels[offset + 2] >> 3;
+        const a4 = Math.max(1, Math.round(alpha * 15 / 255));
+        const key = r5 | (g5 << 5) | (b5 << 10) | (a4 << 15);
+        let paletteIndex = nearestPaletteIndex.get(key);
+        if (paletteIndex === undefined) {
+          const color = histogram.get(key);
+          let bestDistance = Infinity;
+          paletteIndex = 0;
+          palette.forEach((entry, index) => {
+            if (entry.a === 0) return;
+            const red = color.r - entry.r;
+            const green = color.g - entry.g;
+            const blue = color.b - entry.b;
+            const opacity = (color.a - entry.a) * 1.5;
+            const distance = red * red + green * green + blue * blue + opacity * opacity;
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              paletteIndex = index;
+            }
+          });
+          nearestPaletteIndex.set(key, paletteIndex);
+        }
+        const entry = palette[paletteIndex];
+        result[offset] = entry.r;
+        result[offset + 1] = entry.g;
+        result[offset + 2] = entry.b;
+        result[offset + 3] = entry.a;
+        if ((offset & 0xfffff) === 0xffffc) await new Promise(requestAnimationFrame);
+      }
+      return { imageData: new ImageData(result, source.width, source.height), paletteColors: palette.length };
+    }
+
+    function createXmpPacket(metadata) {
+      const xmlSafeJson = JSON.stringify(metadata)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return `<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Model Browser">\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n<rdf:Description rdf:about="" xmlns:mb="https://github.com/jpeckenpaugh/model-browser/ns/sprite-sheet/1.0/">\n<mb:spriteSheetMetadata>${xmlSafeJson}</mb:spriteSheetMetadata>\n</rdf:Description>\n</rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>`;
+    }
+
+    function addXmpToWebp(encodedData, metadata, width, height, hasAlpha) {
+      const bytes = new Uint8Array(encodedData);
+      const readFourCC = (offset) => String.fromCharCode(...bytes.subarray(offset, offset + 4));
+      if (readFourCC(0) !== 'RIFF' || readFourCC(8) !== 'WEBP') throw new Error('The WebP encoder returned an invalid RIFF image.');
+      const chunks = [];
+      for (let offset = 12; offset + 8 <= bytes.length;) {
+        const type = readFourCC(offset);
+        const size = new DataView(bytes.buffer, bytes.byteOffset + offset + 4, 4).getUint32(0, true);
+        const start = offset + 8;
+        const end = start + size;
+        if (end > bytes.length) throw new Error('The WebP encoder returned a truncated chunk.');
+        chunks.push({ type, data: bytes.slice(start, end) });
+        offset = end + (size & 1);
+      }
+
+      const existingExtended = chunks.find((chunk) => chunk.type === 'VP8X');
+      let extendedHeader;
+      if (existingExtended) {
+        extendedHeader = existingExtended.data;
+        extendedHeader[0] |= 0x04; // XMP metadata feature bit.
+      } else {
+        extendedHeader = new Uint8Array(10);
+        extendedHeader[0] = (hasAlpha ? 0x10 : 0) | 0x04;
+        const view = new DataView(extendedHeader.buffer);
+        view.setUint32(0, extendedHeader[0], true);
+        extendedHeader[4] = (width - 1) & 0xff;
+        extendedHeader[5] = ((width - 1) >> 8) & 0xff;
+        extendedHeader[6] = ((width - 1) >> 16) & 0xff;
+        extendedHeader[7] = (height - 1) & 0xff;
+        extendedHeader[8] = ((height - 1) >> 8) & 0xff;
+        extendedHeader[9] = ((height - 1) >> 16) & 0xff;
+      }
+      const metadataBytes = new TextEncoder().encode(createXmpPacket(metadata));
+      const retainedChunks = chunks.filter((chunk) => chunk.type !== 'VP8X' && chunk.type !== 'XMP ');
+      const colorProfile = retainedChunks.filter((chunk) => chunk.type === 'ICCP');
+      const imageAndOtherChunks = retainedChunks.filter((chunk) => chunk.type !== 'ICCP');
+      const outputChunks = [
+        { type: 'VP8X', data: extendedHeader },
+        ...colorProfile,
+        ...imageAndOtherChunks,
+        { type: 'XMP ', data: metadataBytes },
+      ];
+      const encodedChunks = outputChunks.map(({ type, data }) => {
+        const chunk = new Uint8Array(8 + data.length + (data.length & 1));
+        for (let index = 0; index < 4; index += 1) chunk[index] = type.charCodeAt(index);
+        new DataView(chunk.buffer).setUint32(4, data.length, true);
+        chunk.set(data, 8);
+        return chunk;
+      });
+      const totalSize = 12 + encodedChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const output = new Uint8Array(totalSize);
+      output.set(new TextEncoder().encode('RIFF'), 0);
+      new DataView(output.buffer).setUint32(4, totalSize - 8, true);
+      output.set(new TextEncoder().encode('WEBP'), 8);
+      let offset = 12;
+      for (const chunk of encodedChunks) {
+        output.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return output;
+    }
+
+    function addJsonMetadataToPng(encodedData, metadata) {
+      const bytes = new Uint8Array(encodedData);
+      const signature = [137, 80, 78, 71, 13, 10, 26, 10];
+      if (!signature.every((value, index) => bytes[index] === value)) throw new Error('PNG encoder returned an invalid image.');
+      const text = new TextEncoder().encode(JSON.stringify(metadata));
+      const keyword = new TextEncoder().encode('spriteSheetMetadata');
+      const payload = new Uint8Array(keyword.length + 5 + text.length);
+      payload.set(keyword, 0);
+      payload[keyword.length] = 0; // Keyword terminator.
+      payload[keyword.length + 1] = 0; // Uncompressed iTXt text.
+      payload[keyword.length + 2] = 0; // Compression method.
+      payload[keyword.length + 3] = 0; // Empty language tag.
+      payload[keyword.length + 4] = 0; // Empty translated keyword.
+      payload.set(text, keyword.length + 5);
+
+      const crcTable = new Uint32Array(256);
+      for (let index = 0; index < crcTable.length; index += 1) {
+        let value = index;
+        for (let bit = 0; bit < 8; bit += 1) value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+        crcTable[index] = value >>> 0;
+      }
+      const typeBytes = new TextEncoder().encode('iTXt');
+      let crc = 0xffffffff;
+      for (const value of [...typeBytes, ...payload]) crc = crcTable[(crc ^ value) & 0xff] ^ (crc >>> 8);
+      crc = (crc ^ 0xffffffff) >>> 0;
+      const chunk = new Uint8Array(12 + payload.length);
+      const chunkView = new DataView(chunk.buffer);
+      chunkView.setUint32(0, payload.length, false);
+      chunk.set(typeBytes, 4);
+      chunk.set(payload, 8);
+      chunkView.setUint32(8 + payload.length, crc, false);
+
+      let insertAt = bytes.length;
+      for (let offset = 8; offset + 12 <= bytes.length;) {
+        const length = new DataView(bytes.buffer, bytes.byteOffset + offset, 4).getUint32(0, false);
+        const type = String.fromCharCode(...bytes.subarray(offset + 4, offset + 8));
+        if (type === 'IEND') {
+          insertAt = offset;
+          break;
+        }
+        offset += 12 + length;
+      }
+      const output = new Uint8Array(bytes.length + chunk.length);
+      output.set(bytes.subarray(0, insertAt), 0);
+      output.set(chunk, insertAt);
+      output.set(bytes.subarray(insertAt), insertAt + chunk.length);
+      return output;
+    }
+
+    async function previewSingleSprite() {
+      if (!model) return;
+      previewSingleButton.disabled = true;
+      document.querySelector('#error').textContent = '';
+      document.querySelector('#single-preview-panel').hidden = true;
+      singleSpriteCapture = null;
+      try {
+        const dimensions = selectedDimensions();
+        const pitch = selectedPitch();
+        const angle = Number(singleAngle.value);
+        if (modeSelect.value === 'walking' && mixer) { mixer.setTime(0); model.updateMatrixWorld(true); }
+        if (!renderer) renderer = makeRenderer(dimensions.width, dimensions.height);
+        else renderer.setSize(dimensions.width, dimensions.height, false);
+        renderer.setClearColor(0xdfe4e8, 0);
+        const scene = new THREE.Scene();
+        scene.background = null;
+        scene.add(model);
+        addLights(scene);
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
+        const framing = makeSharedFraming([getPoseGeometry(model)], [THREE.MathUtils.degToRad(angle)], pitch, dimensions.width / dimensions.height);
+        frameCamera(camera, THREE.MathUtils.degToRad(angle), pitch, framing);
+        renderer.render(scene, camera);
+        const sourceCanvas = document.createElement('canvas');
+        sourceCanvas.width = dimensions.width; sourceCanvas.height = dimensions.height;
+        const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+        const sourceImage = new Image(); sourceImage.src = renderer.domElement.toDataURL('image/png'); await sourceImage.decode();
+        sourceContext.drawImage(sourceImage, 0, 0);
+        const pixels = sourceContext.getImageData(0, 0, dimensions.width, dimensions.height);
+        let minX = dimensions.width, minY = dimensions.height, maxX = -1, maxY = -1;
+        for (let y = 0; y < dimensions.height; y += 1) for (let x = 0; x < dimensions.width; x += 1) {
+          if (pixels.data[(y * dimensions.width + x) * 4 + 3] > 8) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }
+        }
+        if (maxX < minX || maxY < minY) throw new Error('No visible model pixels were captured.');
+        const pad = Math.round(Math.max(maxX - minX + 1, maxY - minY + 1) * Number(singlePadding.value) / 100);
+        minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+        maxX = Math.min(dimensions.width - 1, maxX + pad); maxY = Math.min(dimensions.height - 1, maxY + pad);
+        const crop = document.createElement('canvas');
+        crop.width = maxX - minX + 1; crop.height = maxY - minY + 1;
+        const cropContext = crop.getContext('2d');
+        if (!cropContext) throw new Error('Canvas context is unavailable.');
+        if (!transparency.checked) { cropContext.fillStyle = '#dfe4e8'; cropContext.fillRect(0, 0, crop.width, crop.height); }
+        cropContext.drawImage(sourceCanvas, minX, minY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+        const preview = document.querySelector('#single-preview');
+        preview.src = crop.toDataURL('image/png');
+        document.querySelector('#single-preview-info').textContent = `${crop.width} × ${crop.height} px · ${angle}° angle · ${pitch}° pitch · ${singlePadding.value}% padding`;
+        document.querySelector('#single-preview-panel').hidden = false;
+
+        const metadata = {
+          schemaVersion: 1, imageWidth: crop.width, imageHeight: crop.height,
+          frameWidth: crop.width, frameHeight: crop.height, columns: 1, rows: 1, frameCount: 1,
+          layout: 'single-image', model: { name: modelSelect.selectedOptions[0]?.textContent || 'model', source: modelSelect.value },
+          capture: { mode: 'single-sprite', angleDegrees: angle, cameraPitchDegrees: pitch, sourceWidth: dimensions.width, sourceHeight: dimensions.height, crop: { x: minX, y: minY, width: crop.width, height: crop.height, paddingPercent: Number(singlePadding.value) }, transparentBackground: transparency.checked, pose: modeSelect.value === 'walking' ? 'selected animation at time zero' : 'static' },
+          registrationPoint: { x: crop.width / 2, y: crop.height, origin: 'top-left', preset: 'bottom-center' },
+          frames: [{ index: 0, label: `Sprite ${angle}°`, direction: 'single', directionName: 'Single view', state: 'still', angleDegrees: angle, frameIndex: 0, x: 0, y: 0, width: crop.width, height: crop.height }],
+        };
+        singleSpriteCapture = { crop, cropContext, metadata, angle, selectedFormat: exportFormat.value, modelName: modelSelect.selectedOptions[0]?.textContent || 'model' };
+        syncExportButton();
+        status.textContent = `Preview ready · ${crop.width} × ${crop.height} · ${angle}°`;
+      } catch (error) {
+        document.querySelector('#error').textContent = `Could not preview single sprite: ${error.message}`;
+      } finally { previewSingleButton.disabled = !model; }
+    }
+
+    async function exportSingleSprite() {
+      if (!singleSpriteCapture) return;
+      const { crop, cropContext, metadata, angle, selectedFormat, modelName } = singleSpriteCapture;
+      exportSingleButton.disabled = true;
+      try {
+        const basename = safeFilename(modelName);
+        const suffix = `-${angle}deg-single`;
+        const imageFilename = `${basename}${suffix}.${selectedFormat === 'png' ? 'png' : 'webp'}`;
+        metadata.image = imageFilename;
+        if (selectedFormat === 'png') {
+          metadata.encoding = { format: 'PNG', lossless: true, paletteReduction: null };
+          const blob = await new Promise((resolve, reject) => crop.toBlob((result) => result ? resolve(result) : reject(new Error('PNG encoding failed.')), 'image/png'));
+          const pngBytes = addJsonMetadataToPng(await blob.arrayBuffer(), metadata);
+          downloadBlob(new Blob([pngBytes], { type: 'image/png' }), imageFilename);
+        } else {
+          const imageData = cropContext.getImageData(0, 0, crop.width, crop.height);
+          const quantized = await quantizeToAdaptivePalette(imageData);
+          metadata.encoding = { format: 'WebP', paletteReduction: 'adaptive median cut', maximumPaletteColors: 256, losslessAfterPaletteReduction: false, quality: 1, encoder: 'browser-native', paletteColorsUsed: quantized.paletteColors };
+          const encoded = await encodeBrowserWebp(quantized.imageData);
+          const hasAlpha = quantized.imageData.data.some((value, index) => index % 4 === 3 && value < 255);
+          downloadBlob(new Blob([addXmpToWebp(encoded, metadata, crop.width, crop.height, hasAlpha)], { type: 'image/webp' }), imageFilename);
+        }
+        if (exportJson.checked) downloadBlob(new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' }), `${basename}${suffix}.json`);
+        status.textContent = `Exported single sprite · ${crop.width} × ${crop.height} · ${angle}°`;
+      } catch (error) {
+        document.querySelector('#error').textContent = `Could not export single sprite: ${error.message}`;
+      } finally { syncExportButton(); }
+    }
+
+    async function exportSpriteSheet() {
+      if (!lastRenderConfig || lastRenderConfig.mode !== modeSelect.value) return;
+      const config = lastRenderConfig;
+      const walking = config.mode === 'walking';
+      const directionGroups = walking ? [...views.querySelectorAll('.direction-group[data-preview-kind="rendered"]')] : [];
+      const sourceSequences = directionGroups.map((group) => [...group.querySelectorAll('figure:not(.interpolated)')].filter((figure) => figure.querySelector('img')));
+      const figures = walking ? sourceSequences.flat() : [...views.querySelectorAll(':scope > figure:not(.interpolated)')].filter((figure) => figure.querySelector('img'));
+      const stillFigures = walking ? [...views.querySelectorAll('.direction-group[data-preview-kind="still"] figure:not(.interpolated)')] : [];
+      const expectedFrames = walking ? config.frameCount * 4 : config.viewCount;
+      if (figures.length !== expectedFrames || (walking && (sourceSequences.some((sequence) => sequence.length !== config.frameCount) || stillFigures.length !== animationTemplateStillAngles.length))) {
+        document.querySelector('#error').textContent = 'Rendered frames changed. Render the current capture settings again before exporting.';
+        return;
+      }
+      exportSheetButton.disabled = true;
+      document.querySelector('#error').textContent = '';
+      const webpSize = document.querySelector('#asset-webp-size');
+      try {
+        const images = figures.map((figure) => figure.querySelector('img'));
+        const stillImages = stillFigures.map((figure) => figure.querySelector('img'));
+        await Promise.all([...images, ...stillImages].map((image) => image.decode()));
+        const exportedFrames = [];
+        if (walking) {
+          const sourceDirections = [
+            { id: 'front', label: 'Front', angleDegrees: 0 },
+            { id: 'right', label: 'Right', angleDegrees: 90 },
+            { id: 'back', label: 'Back', angleDegrees: 180 },
+            { id: 'left', label: 'Left', angleDegrees: 270 },
+          ];
+          for (let directionIndex = 0; directionIndex < sourceSequences.length; directionIndex += 1) {
+            const sequence = sourceSequences[directionIndex];
+            const sourceDirection = sourceDirections[directionIndex];
+            for (let frameIndex = 0; frameIndex < sequence.length; frameIndex += 1) {
+              exportedFrames.push({
+                image: sequence[frameIndex].querySelector('img'),
+                direction: sourceDirection,
+                frameIndex,
+                sampleTimeSeconds: frameIndex * config.clipDurationSeconds / config.frameCount,
+                derived: null,
+              });
+            }
+          }
+          if (exportDiagonals.checked) {
+            for (const spec of walkingDerivedDirections) {
+              const sequence = sourceSequences[spec.sourceIndex];
+              const transform = makeShearRotateTransform(sequence, spec.shear, spec.rotation, false);
+              const sourceDirection = sourceDirections[spec.sourceIndex];
+              for (let frameIndex = 0; frameIndex < sequence.length; frameIndex += 1) {
+                const sourceImage = sequence[frameIndex].querySelector('img');
+                const derivedCanvas = document.createElement('canvas');
+                derivedCanvas.width = config.width;
+                derivedCanvas.height = config.height;
+                const derivedContext = derivedCanvas.getContext('2d');
+                if (!derivedContext) throw new Error('Canvas context is unavailable for derived direction frames.');
+                transform(derivedContext);
+                derivedContext.drawImage(sourceImage, 0, 0);
+                derivedContext.setTransform(1, 0, 0, 1, 0, 0);
+                exportedFrames.push({
+                  image: derivedCanvas,
+                  direction: { id: safeFilename(spec.heading), label: spec.heading, angleDegrees: spec.angleDegrees },
+                  frameIndex,
+                  sampleTimeSeconds: frameIndex * config.clipDurationSeconds / config.frameCount,
+                  derived: { sourceDirection: sourceDirection.id, shear: spec.shear, canvasRotationDegrees: spec.rotation },
+                });
+              }
+            }
+          }
+          if (exportStills.checked) {
+            stillImages.forEach((image, index) => {
+              const angleDegrees = animationTemplateStillAngles[index];
+              exportedFrames.push({
+                image,
+                direction: { id: `still-${angleDegrees}`, label: `Still ${angleDegrees}°`, angleDegrees },
+                frameIndex: 0,
+                sampleTimeSeconds: 0,
+                derived: null,
+                still: true,
+              });
+            });
+          }
+        } else {
+          images.forEach((image, index) => {
+            const label = figures[index].querySelector('figcaption')?.textContent || `View ${index + 1}`;
+            exportedFrames.push({ image, direction: { id: `view-${index + 1}`, label, angleDegrees: index * 360 / images.length }, frameIndex: index, sampleTimeSeconds: null, derived: null });
+          });
+        }
+        const columns = walking ? config.frameCount : Math.min(exportedFrames.length, 4);
+        const rows = Math.ceil(exportedFrames.length / columns);
+        const width = config.width * columns;
+        const height = config.height * rows;
+        const rawSheetBytes = width * height * 4;
+        if (rawSheetBytes > 128 * 1024 * 1024 || width * height > 8_388_608) {
+          throw new Error(`This sheet would need ${formatBytes(rawSheetBytes)} of canvas memory or exceed the 8.4-megapixel palette-processing limit. Reduce the frame size or view count and try again.`);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Canvas context is unavailable.');
+        exportedFrames.forEach(({ image }, index) => {
+          const x = index % columns * config.width;
+          const y = Math.floor(index / columns) * config.height;
+          context.drawImage(image, x, y, config.width, config.height);
+        });
+        const basename = safeFilename(config.modelName);
+        const animationSuffix = walking ? `-${safeFilename(config.animationName)}-animation` : '-turntable';
+        const pngFilename = `${basename}${animationSuffix}.png`;
+        const webpFilename = `${basename}${animationSuffix}-palette.webp`;
+        const jsonFilename = `${basename}${animationSuffix}.json`;
+        const selectedFormat = exportFormat.value;
+        const imageFilename = selectedFormat === 'png' ? pngFilename : webpFilename;
+        const metadata = {
+          schemaVersion: 1,
+          image: imageFilename,
+          imageWidth: width,
+          imageHeight: height,
+          frameWidth: config.width,
+          frameHeight: config.height,
+          columns,
+          rows,
+          frameCount: exportedFrames.length,
+          layout: 'row-major',
+          model: { name: config.modelName, source: config.modelUrl },
+          capture: walking ? {
+            mode: 'model-animation',
+            animationName: config.animationName,
+            clipDurationSeconds: config.clipDurationSeconds,
+            loop: true,
+            sampling: 'Uniformly spaced over the clip duration; the duplicate loop endpoint is omitted',
+            sourceFrameCount: config.frameCount,
+            playbackFrameRate: Number(playbackSpeed.value),
+            frameDurationSeconds: 1 / Number(playbackSpeed.value),
+            sequenceDurationSeconds: config.frameCount / Number(playbackSpeed.value),
+            frameOrder: 'cardinal animation rows, optional derived animation rows, then one still-view row',
+            includesDerivedDiagonals: exportDiagonals.checked,
+            includesStillViews: exportStills.checked,
+            stillViews: exportStills.checked ? { poseSource: 'selected animation clip at time zero', animationName: config.animationName, sampleTimeSeconds: 0, angleDegrees: animationTemplateStillAngles } : null,
+            cameraPitchDegrees: config.pitch,
+            transparentBackground: config.transparent,
+            directions: exportedFrames.filter((frame) => frame.frameIndex === 0).map((frame) => ({ id: frame.direction.id, name: frame.direction.label, angleDegrees: frame.direction.angleDegrees, type: frame.still ? 'still' : frame.derived ? 'derived' : 'animated' })),
+          } : {
+            mode: 'still-turntable',
+            cameraPitchDegrees: config.pitch,
+            transparentBackground: config.transparent,
+            angleZeroDegrees: 0,
+            angleConvention: '0° is the front view; increasing angles follow the application turntable order',
+          },
+          encoding: selectedFormat === 'webp'
+            ? { format: 'WebP', paletteReduction: 'adaptive median cut', maximumPaletteColors: 256, losslessAfterPaletteReduction: false, quality: 1, encoder: 'browser-native' }
+            : { format: 'PNG', lossless: true, paletteReduction: null },
+          registrationPoint: {
+            x: config.width / 2,
+            y: config.height,
+            origin: 'top-left',
+            preset: 'bottom-center',
+          },
+          frames: exportedFrames.map((frame, index) => ({
+            index,
+            label: walking && !frame.still ? `${frame.direction.label} · Frame ${String(frame.frameIndex + 1).padStart(2, '0')}` : frame.direction.label,
+            direction: frame.direction.id,
+            directionName: frame.direction.label,
+            state: frame.still ? 'still' : walking ? 'walking' : 'still',
+            angleDegrees: frame.direction.angleDegrees,
+            frameIndex: frame.frameIndex,
+            ...(walking ? { sampleTimeSeconds: frame.sampleTimeSeconds, ...(frame.still ? { poseSourceAnimation: config.animationName, loop: false } : { frameDurationSeconds: 1 / Number(playbackSpeed.value), loop: true }) } : {}),
+            ...(frame.derived ? { derived: frame.derived } : {}),
+            x: index % columns * config.width,
+            y: Math.floor(index / columns) * config.height,
+            width: config.width,
+            height: config.height,
+          })),
+        };
+        if (selectedFormat === 'png') {
+          status.textContent = 'Encoding PNG with embedded sprite metadata…';
+          const pngBlob = await new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('PNG encoding failed.')), 'image/png');
+          });
+          const pngBytes = addJsonMetadataToPng(await pngBlob.arrayBuffer(), metadata);
+          const metadataPng = new Blob([pngBytes], { type: 'image/png' });
+          downloadBlob(metadataPng, pngFilename);
+          if (exportJson.checked) downloadBlob(new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' }), jsonFilename);
+          assetEstimateSerial += 1;
+          document.querySelector('#asset-png-size').textContent = `${formatBytes(metadataPng.size)} PNG · embedded metadata`;
+          webpSize.textContent = 'Not encoded (PNG selected)';
+          status.textContent = walking ? `Exported ${exportedFrames.length} animation frames · ${width} × ${height} PNG` : `Exported ${exportedFrames.length} views · ${width} × ${height} PNG`;
+        } else {
+          status.textContent = 'Reducing sprite sheet to an adaptive 256-color palette…';
+          const sourcePixels = context.getImageData(0, 0, width, height);
+          const quantized = await quantizeToAdaptivePalette(sourcePixels);
+          metadata.encoding.paletteColorsUsed = quantized.paletteColors;
+          status.textContent = 'Encoding high-quality WebP and embedding XMP metadata…';
+          const encoded = await encodeBrowserWebp(quantized.imageData);
+          const hasAlpha = quantized.imageData.data.some((_, index) => index % 4 === 3 && quantized.imageData.data[index] < 255);
+          const webpBytes = addXmpToWebp(encoded, metadata, width, height, hasAlpha);
+          const webpBlob = new Blob([webpBytes], { type: 'image/webp' });
+          downloadBlob(webpBlob, webpFilename);
+          if (exportJson.checked) downloadBlob(new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' }), jsonFilename);
+          webpSize.textContent = `${formatBytes(webpBlob.size)} WebP · ${quantized.paletteColors} colors · quality 100 + XMP`;
+          status.textContent = walking ? `Exported ${exportedFrames.length} animation frames · ${width} × ${height} palette WebP` : `Exported ${exportedFrames.length} views · ${width} × ${height} palette WebP`;
+        }
+      } catch (error) {
+        document.querySelector('#error').textContent = `Could not export sprite sheet: ${error.message}`;
+        const failedSize = exportFormat.value === 'png' ? document.querySelector('#asset-png-size') : webpSize;
+        failedSize.textContent = `Export failed (${error.message})`;
+      } finally {
+        syncExportButton();
+      }
+    }
+
+    function selectedPitch() {
+      const value = pitchSelect.value === 'custom' ? Number(customPitch.value) : Number(pitchSelect.value);
+      if (!Number.isFinite(value) || value < 0 || value > 80) throw new Error('Camera pitch must be between 0° and 80°.');
+      return value;
+    }
+
+    function makeRenderer(width, height) {
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
+      renderer.setSize(width, height, false);
+      renderer.setPixelRatio(1);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      // Capture with alpha so the shared raster fit can measure only the model pixels.
+      renderer.setClearColor(0xdfe4e8, 0);
+      return renderer;
+    }
+
+    function getPoseGeometry(object) {
+      object.updateMatrixWorld(true);
+      const bounds = new THREE.Box3().makeEmpty();
+      const pointValues = [];
+      object.traverse((child) => {
+        if (child.isMesh) {
+          if (child.isSkinnedMesh) child.skeleton.update();
+          const positions = child.geometry.attributes.position;
+          if (!positions) return;
+          const vertex = new THREE.Vector3();
+          for (let index = 0; index < positions.count; index += 1) {
+            vertex.fromBufferAttribute(positions, index);
+            if (child.isSkinnedMesh) child.applyBoneTransform(index, vertex);
+            vertex.applyMatrix4(child.matrixWorld);
+            bounds.expandByPoint(vertex);
+            pointValues.push(vertex.x, vertex.y, vertex.z);
+          }
+        }
+      });
+      return { bounds, points: new Float32Array(pointValues) };
+    }
+
+    function makeSharedFraming(poseSamples, azimuths, pitch, aspect) {
+      const bounds = new THREE.Box3().makeEmpty();
+      for (const sample of poseSamples) bounds.union(sample.bounds);
+      const center = bounds.getCenter(new THREE.Vector3());
+      const dimensions = bounds.getSize(new THREE.Vector3());
+      const worldUp = new THREE.Vector3(0, 1, 0);
+      const elevation = THREE.MathUtils.degToRad(pitch);
+      let halfHeight = 0;
+      for (const azimuth of azimuths) {
+        const direction = new THREE.Vector3(-Math.sin(azimuth) * Math.cos(elevation), Math.sin(elevation), Math.cos(azimuth) * Math.cos(elevation));
+        const forward = direction.negate();
+        const right = new THREE.Vector3().crossVectors(forward, worldUp).normalize();
+        const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+        for (const sample of poseSamples) {
+          const points = sample.points;
+          for (let index = 0; index < points.length; index += 3) {
+            const x = points[index] - center.x;
+            const y = points[index + 1] - center.y;
+            const z = points[index + 2] - center.z;
+            const projectedX = x * right.x + y * right.y + z * right.z;
+            const projectedY = x * up.x + y * up.y + z * up.z;
+            halfHeight = Math.max(halfHeight, Math.abs(projectedX), Math.abs(projectedY));
+          }
+        }
+      }
+      // Keep framing proportional to model scale. An absolute 0.01-world-unit minimum made
+      // millimeter-scale GLBs (such as River Rat, whose armature is scaled to 0.01) look tiny.
+      const minimumHalfHeight = Math.max(dimensions.length() * 1e-6, Number.EPSILON);
+      return { center, halfHeight: Math.max(halfHeight * 1.025, minimumHalfHeight), aspect, distance: dimensions.length() * 2 + 1, far: Math.max(100, dimensions.length() * 10) };
+    }
+
+    function frameCamera(camera, azimuth, pitch, framing) {
+      camera.right = framing.halfHeight * framing.aspect;
+      camera.left = -framing.halfHeight * framing.aspect;
+      camera.top = framing.halfHeight;
+      camera.bottom = -framing.halfHeight;
+      camera.near = 0.01;
+      camera.far = framing.far;
+      const elevation = THREE.MathUtils.degToRad(pitch);
+      const direction = new THREE.Vector3(-Math.sin(azimuth) * Math.cos(elevation), Math.sin(elevation), Math.cos(azimuth) * Math.cos(elevation));
+      camera.position.copy(framing.center).add(direction.multiplyScalar(framing.distance));
+      camera.lookAt(framing.center);
+      camera.updateProjectionMatrix();
+    }
+
+    function addLights(scene) {
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x78818c, 2.0));
+      const key = new THREE.DirectionalLight(0xffffff, 2.2);
+      key.position.set(4, 7, 6);
+      scene.add(key);
+      const fill = new THREE.DirectionalLight(0xffffff, 0.8);
+      fill.position.set(-5, 3, -4);
+      scene.add(fill);
+    }
+
+    function renderCard(renderer, scene, camera, label, azimuth, pitch, dimensions, framing, showCaption = true) {
+      frameCamera(camera, azimuth, pitch, framing);
+      renderer.render(scene, camera);
+      const figure = document.createElement('figure');
+      figure.style.setProperty('--frame-width', `${dimensions.width}px`);
+      figure.style.setProperty('--fit-cap-width', `${dimensions.width * 2}px`);
+      const image = document.createElement('img');
+      image.src = renderer.domElement.toDataURL('image/png');
+      image.style.aspectRatio = `${dimensions.width} / ${dimensions.height}`;
+      image.alt = `${label}, ${pitch}° pitch, ${dimensions.width} by ${dimensions.height} pixels`;
+      figure.append(image);
+      if (showCaption) {
+        const caption = document.createElement('figcaption');
+        caption.textContent = label;
+        figure.append(caption);
+      }
+      views.append(figure);
+    }
+
+    async function fitRenderedFigures(figures, dimensions, serial) {
+      const images = figures.map((figure) => figure.querySelector('img'));
+      await Promise.all(images.map((image) => image.decode()));
+      const { width, height } = dimensions;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      if (!context) throw new Error('Could not create a canvas for image fitting.');
+      const scanCanvas = document.createElement('canvas');
+      scanCanvas.width = Math.min(width, 256);
+      scanCanvas.height = Math.min(height, 256);
+      const scanContext = scanCanvas.getContext('2d', { willReadFrequently: true });
+      if (!scanContext) throw new Error('Could not create a canvas for silhouette scanning.');
+
+      // Find one silhouette box for the entire capture set. Applying the resulting
+      // transform to every frame keeps model scale and placement steady during playback.
+      let minX = width;
+      let minY = height;
+      let maxX = -1;
+      let maxY = -1;
+      for (const image of images) {
+        scanContext.clearRect(0, 0, scanCanvas.width, scanCanvas.height);
+        scanContext.drawImage(image, 0, 0, scanCanvas.width, scanCanvas.height);
+        const pixels = scanContext.getImageData(0, 0, scanCanvas.width, scanCanvas.height).data;
+        for (let y = 0; y < scanCanvas.height; y += 1) {
+          for (let x = 0; x < scanCanvas.width; x += 1) {
+            if (pixels[(y * scanCanvas.width + x) * 4 + 3] > 8) {
+              minX = Math.min(minX, x * width / scanCanvas.width);
+              minY = Math.min(minY, y * height / scanCanvas.height);
+              maxX = Math.max(maxX, (x + 1) * width / scanCanvas.width);
+              maxY = Math.max(maxY, (y + 1) * height / scanCanvas.height);
+            }
+          }
+        }
+        if (serial !== renderSerial) return;
+      }
+      if (maxX <= minX || maxY <= minY) return;
+
+      const boundsWidth = maxX - minX;
+      const boundsHeight = maxY - minY;
+      const marginX = Math.max(2, width * 0.04);
+      const marginY = Math.max(2, height * 0.04);
+      const scale = Math.min((width - marginX * 2) / boundsWidth, (height - marginY * 2) / boundsHeight);
+      const offsetX = width / 2 - (minX + maxX) / 2 * scale;
+      const offsetY = height / 2 - (minY + maxY) / 2 * scale;
+
+      for (const image of images) {
+        context.clearRect(0, 0, width, height);
+        if (!transparency.checked) {
+          context.fillStyle = '#dfe4e8';
+          context.fillRect(0, 0, width, height);
+        }
+        context.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+        context.drawImage(image, 0, 0, width, height);
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        image.src = canvas.toDataURL('image/png');
+      }
+    }
+
+    async function renderViews() {
+      if (!model) return;
+      const serial = ++renderSerial;
+      lastRenderConfig = null;
+      syncExportButton();
+      let dimensions;
+      let pitch;
+      const walking = modeSelect.value === 'walking';
+      let frameCount;
+      try {
+        dimensions = selectedDimensions();
+        pitch = selectedPitch();
+        if (walking) {
+          frameCount = Number(frameCountInput.value);
+          if (!Number.isInteger(frameCount) || frameCount < 1 || frameCount > 64) throw new Error('Frame count must be a whole number from 1 to 64.');
+          if (!walkingClip || !mixer) throw new Error('This model does not contain any animation clips.');
+        }
+      } catch (error) {
+        document.querySelector('#error').textContent = error.message;
+        return;
+      }
+      document.querySelector('#error').textContent = '';
+      stopPlayback();
+      if (!renderer) renderer = makeRenderer(dimensions.width, dimensions.height);
+      else {
+        renderer.setSize(dimensions.width, dimensions.height, false);
+        renderer.setClearColor(0xdfe4e8, 0);
+      }
+      const aspect = dimensions.width / dimensions.height;
+      const scene = new THREE.Scene();
+      // Keep captures transparent until after silhouette bounds have been measured.
+      scene.background = null;
+      scene.add(model);
+      addLights(scene);
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
+      views.replaceChildren();
+      let summary;
+      if (walking) {
+        const duration = walkingClip.duration;
+        const sampleTimes = Array.from({ length: frameCount }, (_, index) => index * duration / frameCount);
+        const poseSamples = [];
+        for (const sampleTime of sampleTimes) {
+          mixer.setTime(sampleTime);
+          poseSamples.push(getPoseGeometry(model));
+        }
+        const directions = [
+          { label: 'Front', degrees: 0, gridRow: 5, gridColumn: 3 },
+          { label: 'Right', degrees: 90, gridRow: 3, gridColumn: 5 },
+          { label: 'Back', degrees: 180, gridRow: 1, gridColumn: 3 },
+          { label: 'Left', degrees: 270, gridRow: 3, gridColumn: 1 },
+        ];
+        // Include all template view angles in shared framing so the extra static poses
+        // line up with cardinal animation frames and never clip at a diagonal angle.
+        const azimuths = Array.from({ length: 12 }, (_, index) => THREE.MathUtils.degToRad(index * 30));
+        const framing = makeSharedFraming(poseSamples, azimuths, pitch, aspect);
+        const motionLabel = /run/i.test(walkingClip.name) ? 'Running' : /walk/i.test(walkingClip.name) ? 'Walking' : 'Animation';
+        for (const direction of directions) {
+          const group = document.createElement('section');
+          group.className = 'direction-group';
+          group.setAttribute('aria-label', `${direction.label} ${motionLabel.toLowerCase()} frames`);
+          placeOnDirectionGrid(group, direction.gridRow, direction.gridColumn, 'rendered');
+          const heading = document.createElement('h2');
+          heading.textContent = `${motionLabel} ${direction.label}`;
+          appendPreviewBadge(heading, 'rendered');
+          group.append(heading);
+          views.append(group);
+          for (let index = 0; index < frameCount; index += 1) {
+            const sampleTime = sampleTimes[index];
+            mixer.setTime(sampleTime);
+            model.updateMatrixWorld(true);
+            const label = `${direction.label} · Frame ${String(index + 1).padStart(2, '0')} · ${sampleTime.toFixed(2)}s`;
+            renderCard(renderer, scene, camera, label, THREE.MathUtils.degToRad(direction.degrees), pitch, dimensions, framing, false);
+            group.append(views.lastElementChild);
+          }
+        }
+        mixer.setTime(0);
+        model.updateMatrixWorld(true);
+        const stillGroup = document.createElement('section');
+        stillGroup.className = 'direction-group';
+        stillGroup.dataset.previewKind = 'still';
+        stillGroup.hidden = true;
+        stillGroup.setAttribute('aria-label', 'Additional still views sampled from animation frame 0');
+        for (const degrees of animationTemplateStillAngles) {
+          const label = `Still · ${degrees}° · ${walkingClip.name || 'Animation'} frame 0`;
+          renderCard(renderer, scene, camera, label, THREE.MathUtils.degToRad(degrees), pitch, dimensions, framing);
+          stillGroup.append(views.lastElementChild);
+        }
+        views.append(stillGroup);
+        // Leave the model at the first pose so changing modes starts from a predictable state.
+        mixer.setTime(0);
+        model.updateMatrixWorld(true);
+        const clipSummary = motionLabel === 'Animation' ? ` · ${walkingClip.name || 'unnamed clip'}` : '';
+        summary = `${frameCount} frames × 4 ${motionLabel.toLowerCase()} directions + 8 still views${clipSummary} · ${dimensions.width} × ${dimensions.height} · ${pitch}° pitch`;
+      } else {
+        const count = Number(document.querySelector('#count').value);
+        const azimuths = Array.from({ length: count }, (_, index) => index * 2 * Math.PI / count);
+        const framing = makeSharedFraming([getPoseGeometry(model)], azimuths, pitch, aspect);
+        for (let index = 0; index < count; index += 1) {
+          const degrees = index * 360 / count;
+          const label = count === 4 ? ['Front', 'Right', 'Back', 'Left'][index] : `View ${String(index + 1).padStart(2, '0')} · ${degrees}°`;
+          renderCard(renderer, scene, camera, label, THREE.MathUtils.degToRad(degrees), pitch, dimensions, framing);
+        }
+        summary = `${count} views · ${dimensions.width} × ${dimensions.height} · ${pitch}° pitch`;
+      }
+      const sourceFigures = [...views.querySelectorAll('figure:not(.interpolated)')];
+      try {
+        status.textContent = 'Fitting shared frame…';
+        await fitRenderedFigures(sourceFigures, dimensions, serial);
+      } catch (error) {
+        document.querySelector('#error').textContent = `Could not fit rendered images: ${error.message}`;
+        return;
+      }
+      if (serial !== renderSerial) return;
+      const animatedSourceFigures = walking ? [...views.querySelectorAll('.direction-group[data-preview-kind="rendered"] figure:not(.interpolated)')] : sourceFigures;
+      playButton.disabled = animatedSourceFigures.length < 2;
+      pauseButton.disabled = true;
+      previousFrameButton.disabled = true;
+      nextFrameButton.disabled = true;
+      views.classList.remove('playback');
+      views.classList.remove('directional');
+      views.classList.toggle('transparent', transparency.checked);
+      status.textContent = summary;
+      lastRenderConfig = {
+        mode: walking ? 'walking' : 'still',
+        viewCount: walking ? 0 : Number(document.querySelector('#count').value),
+        frameCount: walking ? frameCount : null,
+        animationName: walkingClip?.name || 'animation',
+        clipDurationSeconds: walking ? walkingClip.duration : null,
+        width: dimensions.width,
+        height: dimensions.height,
+        pitch,
+        transparent: transparency.checked,
+        modelName: modelSelect.selectedOptions[0]?.textContent || 'model',
+        modelUrl: modelSelect.value,
+      };
+      syncExportButton();
+      updateAssetInfo(dimensions, walking ? animatedSourceFigures : sourceFigures);
+    }
+
+    function stopPlayback() {
+      playbackRequest += 1;
+      if (playbackTimer) clearInterval(playbackTimer);
+      playbackTimer = null;
+      playbackStep = null;
+      playbackFrames = [];
+      playbackSourceFigures = [];
+      playbackIndex = -1;
+      playbackBlendFigures = [];
+      playbackExperimentGroups.forEach((group) => group.remove());
+      playbackExperimentGroups = [];
+      playbackExperiments = [];
+      viewsScroll.classList.remove('wheel-active');
+      directionWheelKey.hidden = true;
+      playButton.textContent = 'Play';
+      playButton.disabled = views.querySelectorAll('figure:not(.interpolated)').length < 2;
+      pauseButton.disabled = true;
+      previousFrameButton.disabled = true;
+      nextFrameButton.disabled = true;
+      views.classList.remove('playback');
+      views.classList.remove('directional');
+      views.querySelectorAll('figure').forEach((figure) => figure.classList.remove('active'));
+      views.querySelectorAll('figure.interpolated').forEach((figure) => figure.remove());
+    }
+
+    async function makePlaybackFrames(sourceGroups) {
+      const amount = Number(inbetweenCount.value);
+      const imageGroups = sourceGroups.map((figures) => figures.map((figure) => figure.querySelector('img')));
+      await Promise.all(imageGroups.flat().map((image) => image.decode()));
+      if (imageGroups.some((images) => images.length !== imageGroups[0].length)) throw new Error('Walking direction groups must have matching frame counts.');
+      const frames = [];
+      for (let index = 0; index < imageGroups[0].length; index += 1) {
+        const sourceSlots = sourceGroups.map((figures) => ({ figure: figures[index] }));
+        frames.push({ slots: sourceSlots });
+        const nextIndex = (index + 1) % imageGroups[0].length;
+        for (let between = 1; between <= amount; between += 1) {
+          const mix = between / (amount + 1);
+          const slots = imageGroups.map((images, groupIndex) => {
+            const fromFigure = sourceGroups[groupIndex][index];
+            const toFigure = sourceGroups[groupIndex][nextIndex];
+            const angleLabel = (figure) => figure.querySelector('figcaption')?.textContent.match(/\d+(?:\.\d+)?°/)?.[0];
+            const fromLabel = angleLabel(fromFigure) || `Frame ${index + 1}`;
+            const toLabel = angleLabel(toFigure) || `Frame ${nextIndex + 1}`;
+            return {
+              from: images[index],
+              to: images[nextIndex],
+              mix,
+              label: `Blended · ${fromLabel} → ${toLabel} · ${Math.round(mix * 100)}%`,
+            };
+          });
+          frames.push({ slots });
+        }
+      }
+      return frames;
+    }
+
+    function drawTransformedSlot(context, canvas, slot, transform) {
+      context.save();
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      transform(context, canvas);
+      context.globalCompositeOperation = 'lighter';
+      if (slot.figure) {
+        context.globalAlpha = 1;
+        context.drawImage(slot.figure.querySelector('img'), 0, 0);
+      } else {
+        context.globalAlpha = 1 - slot.mix;
+        context.drawImage(slot.from, 0, 0);
+        context.globalAlpha = slot.mix;
+        context.drawImage(slot.to, 0, 0);
+      }
+      context.restore();
+    }
+
+    function readWarpPixels(image) {
+      if (warpSourcePixels.has(image)) {
+        const cached = warpSourcePixels.get(image);
+        warpSourcePixels.delete(image);
+        warpSourcePixels.set(image, cached);
+        return cached;
+      }
+      const sourceCanvas = document.createElement('canvas');
+      sourceCanvas.width = image.naturalWidth;
+      sourceCanvas.height = image.naturalHeight;
+      const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+      sourceContext.drawImage(image, 0, 0);
+      const pixels = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+      warpSourcePixels.set(image, pixels);
+      if (warpSourcePixels.size > 4) warpSourcePixels.delete(warpSourcePixels.keys().next().value);
+      return pixels;
+    }
+
+    function findSequenceAlphaBounds(figures, width, height) {
+      // Use a few evenly spaced frames to estimate the whole loop's visible bounds.
+      // A shared bound keeps every derived frame at a steady zoom instead of resizing per pose.
+      const sampleCount = Math.min(figures.length, 4);
+      const samples = Array.from({ length: sampleCount }, (_, index) => figures[Math.round(index * (figures.length - 1) / Math.max(sampleCount - 1, 1))]);
+      let minX = width;
+      let minY = height;
+      let maxX = 0;
+      let maxY = 0;
+      for (const figure of samples) {
+        const pixels = readWarpPixels(figure.querySelector('img')).data;
+        for (let y = 0; y < height; y += 2) {
+          for (let x = 0; x < width; x += 2) {
+            if (pixels[(y * width + x) * 4 + 3] > 8) {
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x + 2);
+              maxY = Math.max(maxY, y + 2);
+            }
+          }
+        }
+      }
+      if (maxX <= minX || maxY <= minY) return { minX: 0, minY: 0, maxX: width, maxY: height };
+      const padX = (maxX - minX) * 0.04;
+      const padY = (maxY - minY) * 0.04;
+      return {
+        minX: Math.max(0, minX - padX),
+        minY: Math.max(0, minY - padY),
+        maxX: Math.min(width, maxX + padX),
+        maxY: Math.min(height, maxY + padY),
+      };
+    }
+
+    function makeShearRotateTransform(figures, shear, rotationDegrees, usePreviewZoom = true) {
+      const referenceImage = figures[0].querySelector('img');
+      const width = referenceImage.naturalWidth;
+      const height = referenceImage.naturalHeight;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const rotation = THREE.MathUtils.degToRad(rotationDegrees);
+      const rotationCos = Math.cos(rotation);
+      const rotationSin = Math.sin(rotation);
+      // Apply a vertical shear and then the canvas-space rotation around the frame center.
+      // Canvas Y grows downward, so this matrix's positive angle reads as CCW on screen.
+      const a = rotationCos + rotationSin * shear;
+      const b = -rotationSin + rotationCos * shear;
+      const c = rotationSin;
+      const d = rotationCos;
+      const alphaBounds = findSequenceAlphaBounds(figures, width, height);
+      const transformedBounds = [
+        [alphaBounds.minX, alphaBounds.minY], [alphaBounds.maxX, alphaBounds.minY],
+        [alphaBounds.minX, alphaBounds.maxY], [alphaBounds.maxX, alphaBounds.maxY],
+      ].map(([x, y]) => [a * (x - centerX) + c * (y - centerY), b * (x - centerX) + d * (y - centerY)]);
+      const minX = Math.min(...transformedBounds.map(([x]) => x));
+      const maxX = Math.max(...transformedBounds.map(([x]) => x));
+      const minY = Math.min(...transformedBounds.map(([, y]) => y));
+      const maxY = Math.max(...transformedBounds.map(([, y]) => y));
+      const fit = Math.min(1, (width - 4) / (maxX - minX), (height - 4) / (maxY - minY));
+      const boundsCenterX = (minX + maxX) / 2;
+      const boundsCenterY = (minY + maxY) / 2;
+      return (context) => {
+        // Keep the transformed alpha bounds centered and fit inside the original output canvas.
+        // The optional zoom is preview-only, so it does not alter source renders or export dimensions.
+        const scale = fit * (usePreviewZoom ? Number(experimentZoom.value) / 100 : 1);
+        context.setTransform(
+          scale * a,
+          scale * b,
+          scale * c,
+          scale * d,
+          centerX - scale * (a * centerX + c * centerY + boundsCenterX),
+          centerY - scale * (b * centerX + d * centerY + boundsCenterY),
+        );
+      };
+    }
+
+    function pausePlayback() {
+      if (playbackTimer) clearInterval(playbackTimer);
+      playbackTimer = null;
+      pauseButton.disabled = true;
+      playButton.disabled = playbackFrames.length === 0;
+    }
+
+    function displayPlaybackFrame(index) {
+      if (!playbackFrames.length) return;
+      playbackIndex = (index + playbackFrames.length) % playbackFrames.length;
+      const frame = playbackFrames[playbackIndex];
+      for (const source of playbackSourceFigures) source.classList.remove('active');
+      for (let groupIndex = 0; groupIndex < frame.slots.length; groupIndex += 1) {
+        const slot = frame.slots[groupIndex];
+        const blendFigure = playbackBlendFigures[groupIndex];
+        if (slot.figure) slot.figure.classList.add('active');
+        if (slot.from && blendFigure) {
+          const canvas = blendFigure.querySelector('canvas');
+          const context = canvas.getContext('2d');
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.globalCompositeOperation = 'lighter';
+          context.globalAlpha = 1 - slot.mix;
+          context.drawImage(slot.from, 0, 0);
+          context.globalAlpha = slot.mix;
+          context.drawImage(slot.to, 0, 0);
+          context.globalAlpha = 1;
+          context.globalCompositeOperation = 'source-over';
+          const caption = blendFigure.querySelector('figcaption');
+          if (caption && slot.label) {
+            caption.textContent = slot.label;
+            caption.title = slot.label;
+          }
+          blendFigure.classList.add('active');
+        } else if (blendFigure) {
+          blendFigure.classList.remove('active');
+        }
+      }
+      // Draw the diagonal post-processed previews from the matching front/back time slot.
+      // These canvases are for visual evaluation only; the captured model frames stay untouched.
+      playbackExperiments.forEach((experiment) => {
+        const slot = frame.slots[experiment.sourceIndex];
+        drawTransformedSlot(experiment.context, experiment.canvas, slot, experiment.transform);
+        const tooltip = experiment.usePreviewZoom
+          ? `Shear 40% · ${experiment.rotationLabel} · Zoom ${experimentZoom.value}%`
+          : 'Shear 40% · no rotation';
+        experiment.figure.title = tooltip;
+        experiment.canvas.title = tooltip;
+        experiment.figure.classList.add('active');
+      });
+    }
+
+    function stepPlayback(direction) {
+      pausePlayback();
+      if (!playbackFrames.length) return;
+      const start = playbackIndex < 0 ? (direction > 0 ? 0 : playbackFrames.length - 1) : playbackIndex + direction;
+      displayPlaybackFrame(start);
+    }
+
+    function resumePlayback() {
+      if (!playbackFrames.length || playbackTimer) return;
+      playbackStep = () => displayPlaybackFrame(playbackIndex + 1);
+      playbackTimer = setInterval(playbackStep, playbackIntervalMs());
+      pauseButton.disabled = false;
+      previousFrameButton.disabled = false;
+      nextFrameButton.disabled = false;
+      playButton.disabled = false;
+    }
+
+    async function togglePlayback() {
+      if (playbackTimer) return;
+      if (playbackFrames.length) {
+        resumePlayback();
+        return;
+      }
+      const groups = [...views.querySelectorAll('.direction-group[data-preview-kind="rendered"]')];
+      const sourceGroups = groups.length
+        ? groups.map((group) => [...group.querySelectorAll('figure:not(.interpolated)')])
+        : [[...views.querySelectorAll('figure:not(.interpolated)')]];
+      const sourceFigures = sourceGroups.flat();
+      if (!sourceGroups[0] || sourceGroups[0].length < 2) return;
+      const request = ++playbackRequest;
+      playButton.disabled = true;
+      playButton.textContent = 'Preparing…';
+      let frames;
+      try {
+        frames = await makePlaybackFrames(sourceGroups);
+      } catch (error) {
+        if (request !== playbackRequest) return;
+        document.querySelector('#error').textContent = `Could not prepare playback frames: ${error.message}`;
+        playButton.disabled = false;
+        playButton.textContent = 'Play';
+        return;
+      }
+      if (request !== playbackRequest) return;
+      document.querySelector('#error').textContent = '';
+      const blendFrame = frames.find((frame) => frame.slots.some((slot) => slot.from));
+      playbackSourceFigures = sourceFigures;
+      playbackFrames = frames;
+      playbackIndex = -1;
+      if (blendFrame) {
+        playbackBlendFigures = sourceGroups.map((figures, groupIndex) => {
+          const slot = blendFrame.slots[groupIndex];
+          const figure = document.createElement('figure');
+          figure.className = 'interpolated';
+          figure.style.setProperty('--frame-width', `${slot.from.naturalWidth}px`);
+          figure.style.setProperty('--fit-cap-width', `${slot.from.naturalWidth * 2}px`);
+          const canvas = document.createElement('canvas');
+          canvas.width = slot.from.naturalWidth;
+          canvas.height = slot.from.naturalHeight;
+          canvas.style.aspectRatio = `${canvas.width} / ${canvas.height}`;
+          const caption = !groups.length ? document.createElement('figcaption') : null;
+          figure.append(canvas);
+          if (caption) figure.append(caption);
+          if (groups.length) groups[groupIndex].append(figure);
+          else views.append(figure);
+          return figure;
+        });
+      }
+      if (groups.length === 4) {
+        viewsScroll.classList.add('wheel-active');
+        directionWheelKey.hidden = false;
+        // These are preview-only approximations derived from cardinal source views.
+        // At the back view, local left/right swap on screen, so invert BOTH shear and rotation
+        // signs to make Backward Right/Left mirror the corresponding world directions.
+        // On the right-facing view, forward and back are the two opposite neighboring directions,
+        // so Right-Forward and Right-Back use opposite members of the same mirrored transform pair.
+        // The left-facing view is the corresponding opposite-facing case, so its neighbor signs
+        // mirror the right-facing entries as well.
+        const directionNames = ['front', 'right', 'back', 'left'];
+        for (const spec of walkingDerivedDirections) {
+          const referenceImage = sourceGroups[spec.sourceIndex][0].querySelector('img');
+          const group = document.createElement('section');
+          group.className = 'direction-group';
+          placeOnDirectionGrid(group, spec.row, spec.column, 'derived');
+          group.setAttribute('aria-label', `${spec.heading} derived from the ${directionNames[spec.sourceIndex]} walking view`);
+          const heading = document.createElement('h2');
+          heading.textContent = spec.heading;
+          appendPreviewBadge(heading, 'derived');
+          group.append(heading);
+          const figure = document.createElement('figure');
+          figure.className = 'interpolated';
+          figure.style.setProperty('--frame-width', `${referenceImage.naturalWidth}px`);
+          figure.style.setProperty('--fit-cap-width', `${referenceImage.naturalWidth * 2}px`);
+          const canvas = document.createElement('canvas');
+          canvas.width = referenceImage.naturalWidth;
+          canvas.height = referenceImage.naturalHeight;
+          canvas.style.aspectRatio = `${canvas.width} / ${canvas.height}`;
+          const tooltip = `Shear 40% · ${spec.rotationLabel} · Zoom ${experimentZoom.value}%`;
+          figure.title = tooltip;
+          canvas.title = tooltip;
+          canvas.setAttribute('aria-label', `${spec.heading}, runtime-derived preview`);
+          figure.append(canvas);
+          group.append(figure);
+          views.append(group);
+          playbackExperimentGroups.push(group);
+          playbackExperiments.push({
+            figure,
+            canvas,
+            context: canvas.getContext('2d'),
+            sourceIndex: spec.sourceIndex,
+            rotationLabel: spec.rotationLabel,
+            usePreviewZoom: true,
+            transform: makeShearRotateTransform(sourceGroups[spec.sourceIndex], spec.shear, spec.rotation),
+          });
+        }
+      }
+      views.classList.add('playback');
+      views.classList.toggle('directional', groups.length > 0);
+      displayPlaybackFrame(0);
+      playButton.textContent = 'Play';
+      playButton.disabled = false;
+      previousFrameButton.disabled = false;
+      nextFrameButton.disabled = false;
+      resumePlayback();
+    }
+
+    async function loadModel(url) {
+      if (!url) return;
+      renderSerial += 1;
+      stopPlayback();
+      const serial = ++modelLoadSerial;
+      renderButton.disabled = true;
+      playButton.disabled = true;
+      modelSelect.disabled = true;
+      views.replaceChildren();
+      lastRenderConfig = null;
+      exportSheetButton.disabled = true;
+      status.textContent = 'Loading selected model…';
+      try {
+        const gltf = await new GLTFLoader().loadAsync(url);
+        if (serial !== modelLoadSerial) return;
+        model = gltf.scene;
+        modelFileBytes = Number(modelSelect.selectedOptions[0]?.dataset.sizeBytes) || null;
+        animationClips = gltf.animations;
+        animationSelect.replaceChildren(...animationClips.map((clip, index) => {
+          const option = document.createElement('option');
+          option.value = String(index);
+          option.textContent = clip.name || `Animation ${index + 1}`;
+          return option;
+        }));
+        if (!animationClips.length) {
+          const option = document.createElement('option');
+          option.textContent = 'No animation clips';
+          animationSelect.append(option);
+        }
+        animationSelect.disabled = !animationClips.length;
+        walkingClip = animationClips[Number(animationSelect.value)] || animationClips[0] || null;
+        mixer = walkingClip ? new THREE.AnimationMixer(model) : null;
+        if (mixer) {
+          mixer.clipAction(walkingClip).play();
+          mixer.setTime(0);
+        }
+        const walkingOption = modeSelect.querySelector('option[value="walking"]');
+        walkingOption.disabled = !walkingClip;
+        if (!walkingClip && modeSelect.value === 'walking') {
+          modeSelect.value = 'still';
+          modeSelect.dispatchEvent(new Event('change'));
+        }
+        renderButton.disabled = false;
+        renderViews();
+      } catch (error) {
+        if (serial !== modelLoadSerial) return;
+        console.error(error);
+        status.textContent = 'Could not load model';
+        document.querySelector('#error').textContent = `${error.message}\nCheck that the selected model and its supporting files exist.`;
+      } finally {
+        if (serial === modelLoadSerial) modelSelect.disabled = false;
+      }
+    }
+
+    async function loadModelList() {
+      const response = await fetch('models/models.json');
+      if (!response.ok) throw new Error(`Model list request failed (${response.status}).`);
+      const models = await response.json();
+      if (!models.length) throw new Error('No GLB or glTF models found.');
+      modelSelect.replaceChildren(...models.map((item) => {
+        const option = document.createElement('option');
+        option.value = item.url;
+        option.textContent = item.name;
+        option.dataset.sizeBytes = item.size_bytes;
+        return option;
+      }));
+      const preferred = models.find((item) => item.url.endsWith('/rukiya_walking_optimized.glb')) || models[0];
+      modelSelect.value = preferred.url;
+      await loadModel(preferred.url);
+    }
+
+    try {
+      await loadModelList();
+    } catch (error) {
+      console.error(error);
+      status.textContent = 'Could not load model';
+      document.querySelector('#error').textContent = `${error.message}\nCheck that the local web server is running and models/models.json is available.`;
+    }
+  </script>
+</body>
+</html>
